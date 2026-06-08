@@ -1,44 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ФАЙЛ: V2rayNG/app/src/main/res/values/colors.xml
-  Полностью заменяет оригинальный colors.xml
--->
 <resources>
 
-    <!-- ── Основные цвета темы ── -->
     <color name="accent">#E040A0</color>
-    <color name="accent_dim">#1AE040A0</color>       <!-- 10% opacity -->
-    <color name="accent_ring">#33E040A0</color>      <!-- 20% opacity -->
+    <color name="accent_dim">#1AE040A0</color>
+    <color name="accent_ring">#33E040A0</color>
 
-    <!-- ── Фоны ── -->
     <color name="bg_primary">#111111</color>
     <color name="bg_secondary">#161616</color>
     <color name="bg_card">#1A1A1A</color>
     <color name="bg_card_active">#1E1520</color>
 
-    <!-- ── Границы ── -->
     <color name="border_default">#2A2A2A</color>
     <color name="border_card">#222222</color>
     <color name="border_active">#E040A0</color>
 
-    <!-- ── Текст ── -->
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#CCCCCC</color>
     <color name="text_tertiary">#555555</color>
 
-    <!-- ── Иконки ── -->
     <color name="icon_secondary">#555555</color>
 
-    <!-- ── Пинг ── -->
     <color name="ping_fast">#4CAF50</color>
     <color name="ping_medium">#FF9800</color>
     <color name="ping_slow">#F44336</color>
 
-    <!-- ── Bottom nav (selector) ── -->
+    <color name="colorPing">#4CAF50</color>
+
     <color name="bottom_nav_active">#E040A0</color>
     <color name="bottom_nav_inactive">#444444</color>
 
-    <!-- ── Material / system (нужны для MaterialTheme) ── -->
     <color name="colorPrimary">#E040A0</color>
     <color name="colorPrimaryDark">#111111</color>
     <color name="colorAccent">#E040A0</color>
@@ -47,12 +37,17 @@
     <color name="colorOnBackground">#FFFFFF</color>
     <color name="colorOnSurface">#CCCCCC</color>
     <color name="colorError">#F44336</color>
-
-    <!-- Совместимость с оригинальными ссылками -->
     <color name="colorPrimaryVariant">#C0307A</color>
     <color name="colorSecondary">#E040A0</color>
     <color name="colorSecondaryVariant">#C0307A</color>
     <color name="colorOnPrimary">#FFFFFF</color>
     <color name="colorOnSecondary">#FFFFFF</color>
+
+    <!-- Совместимость с оригинальными цветами -->
+    <color name="color_text_primary">#CCCCCC</color>
+    <color name="color_text_secondary">#555555</color>
+    <color name="color_card_bg">#1A1A1A</color>
+    <color name="color_card_border">#222222</color>
+    <color name="md_theme_primary">#E040A0</color>
 
 </resources>
