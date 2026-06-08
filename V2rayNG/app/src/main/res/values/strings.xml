@@ -472,5 +472,31 @@
         <item>Local</item>
         <item>WebDAV</item>
     </string-array>
+<!-- 
+  ФАЙЛ: V2rayNG/app/src/main/res/values/strings.xml
+  ВАЖНО: это ДОПОЛНЕНИЕ к оригинальному strings.xml, не замена.
+  Добавь эти строки в оригинальный файл (или замени значения существующих).
+
+  Что менять в оригинале:
+    1. app_name → Sav3nokRay
+    2. Добавить новые строки ниже
+ -->
+
+    <!--  ── Изменить существующее ──  -->
+    <string name="app_name" translatable="false">Sav3nokRay</string>
+    <string name="app_tile_name">Sav3nokRay</string>
+    <string name="app_widget_name">Sav3nokRay</string>
+    <!--  ── Новые строки для нового UI ──  -->
+    <string name="connect_label_off">CONNECT</string>
+    <string name="connect_label_on">CONNECTED</string>
+    <string name="servers_label">Servers</string>
+    <string name="see_all_label">See all</string>
+    <string name="stat_upload">Upload</string>
+    <string name="stat_download">Download</string>
+    <string name="stat_session">Session</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_servers">Servers</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_profile">Profile</string>
 
 </resources>
