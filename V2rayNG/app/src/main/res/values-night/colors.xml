@@ -55,6 +55,4 @@
     <color name="color_card_active_border">#E040A0</color>
     <color name="color_text_primary">#E0E0E0</color>
     <color name="color_text_secondary">#777777</color>
-    <color name="color_fab_active">#E040A0</color>
-    <color name="color_fab_inactive">#444444</color>
 </resources>
