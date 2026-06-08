@@ -28,11 +28,7 @@ import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.enums.PermissionType
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.extension.toastError
-import com.v2ray.ang.handler.AngConfigManager
-import com.v2ray.ang.handler.MmkvManager
-import com.v2ray.ang.handler.SettingsChangeManager
-import com.v2ray.ang.handler.SettingsManager
-import com.v2ray.ang.handler.SubscriptionUpdater
+import com.v2ray.ang.handler.*
 import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
@@ -75,8 +71,8 @@ class MainActivity : HelperBaseActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(binding.root)
+
         setupToolbar(binding.toolbar, false, getString(R.string.title_server))
 
         groupPagerAdapter = GroupPagerAdapter(this, emptyList())
@@ -94,17 +90,20 @@ class MainActivity : HelperBaseActivity(),
 
         binding.navView.setNavigationItemSelectedListener(this)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    binding.drawerLayout.closeDrawer(GravityCompat.START)
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                    isEnabled = true
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                        binding.drawerLayout.closeDrawer(GravityCompat.START)
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
                 }
             }
-        })
+        )
 
         binding.fab.setOnClickListener { handleFabAction() }
 
@@ -118,39 +117,28 @@ class MainActivity : HelperBaseActivity(),
     }
 
     private fun setupViewModel() {
-        mainViewModel.updateTestResultAction.observe(this) {
-            setTestState(it)
-        }
-
-        mainViewModel.isRunning.observe(this) {
-            applyRunningState(false, it)
-        }
+        mainViewModel.updateTestResultAction.observe(this) { setTestState(it) }
+        mainViewModel.isRunning.observe(this) { applyRunningState(false, it) }
 
         mainViewModel.startListenBroadcast()
         mainViewModel.initAssets(assets)
     }
 
-    /**
-     * FIXED FULL VERSION (was broken in your code)
-     */
     private fun setupGroupTab() {
         val groups = mainViewModel.getSubscriptions(this)
-
         groupPagerAdapter.update(groups)
 
         tabMediator?.detach()
         tabMediator = TabLayoutMediator(binding.tabGroup, binding.viewPager) { tab, position ->
-            groupPagerAdapter.groups.getOrNull(position)?.let {
+            groups.getOrNull(position)?.let {
                 tab.text = it.remarks
                 tab.tag = it.id
             }
         }.also { it.attach() }
 
         val targetIndex =
-            if (groups.isNotEmpty()) {
-                groups.indexOfFirst { it.id == mainViewModel.subscriptionId }
-                    .takeIf { it >= 0 } ?: 0
-            } else 0
+            groups.indexOfFirst { it.id == mainViewModel.subscriptionId }
+                .takeIf { it >= 0 } ?: (groups.size - 1)
 
         binding.viewPager.setCurrentItem(targetIndex, false)
         binding.tabGroup.isVisible = groups.size > 1
@@ -161,17 +149,13 @@ class MainActivity : HelperBaseActivity(),
 
         if (mainViewModel.isRunning.value == true) {
             CoreServiceManager.stopVService(this)
-
-        } else if (SettingsManager.isVpnMode()) {
+        } else {
             val intent = VpnService.prepare(this)
             if (intent == null) {
                 startV2Ray()
             } else {
                 requestVpnPermission.launch(intent)
             }
-
-        } else {
-            startV2Ray()
         }
     }
 
@@ -208,25 +192,56 @@ class MainActivity : HelperBaseActivity(),
             binding.fab.setImageResource(R.drawable.ic_stop_24dp)
             binding.fab.backgroundTintList =
                 ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_fab_active))
-
             setTestState(getString(R.string.connection_connected))
-
         } else {
             binding.fab.setImageResource(R.drawable.ic_play_24dp)
             binding.fab.backgroundTintList =
                 ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_fab_inactive))
-
             setTestState(getString(R.string.connection_not_connected))
         }
+    }
+
+    // ✅ ВОТ ЭТА ФУНКЦИЯ БЫЛА ПОТЕРЯНА (ИЗ-ЗА НЕЁ У ТЕБЯ КРАШ СБОРКИ)
+    fun importConfigViaSub(): Boolean {
+        showLoading()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val result = mainViewModel.updateConfigViaSubAll()
+            delay(500)
+
+            withContext(Dispatchers.Main) {
+                if (result.configCount == 0) {
+                    toast(R.string.title_update_subscription_no_subscription)
+                } else {
+                    toast(
+                        getString(
+                            R.string.title_update_subscription_result,
+                            result.configCount,
+                            result.successCount,
+                            result.failureCount,
+                            result.skipCount
+                        )
+                    )
+                }
+
+                if (result.configCount > 0) {
+                    mainViewModel.reloadServerList()
+                }
+
+                hideLoading()
+            }
+        }
+
+        return true
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
 
         val searchItem = menu.findItem(R.id.search_view)
-        val searchView = searchItem?.actionView as? SearchView
+        val searchView = searchItem.actionView as SearchView
 
-        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = false
 
             override fun onQueryTextChange(newText: String?): Boolean {
@@ -235,25 +250,22 @@ class MainActivity : HelperBaseActivity(),
             }
         })
 
-        searchView?.setOnCloseListener {
-            mainViewModel.filterConfig("")
-            false
-        }
-
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.service_restart -> {
-                restartV2Ray()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.sub_update -> {
+            importConfigViaSub()
+            true
         }
+        else -> super.onOptionsItemSelected(item)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.settings -> startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
