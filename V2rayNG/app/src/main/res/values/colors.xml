@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
+    <color name="colorPingRed">#F44336</color>
+    <color name="colorIndicator">#E040A0</color>
     <color name="accent">#E040A0</color>
     <color name="accent_dim">#1AE040A0</color>
     <color name="accent_ring">#33E040A0</color>
