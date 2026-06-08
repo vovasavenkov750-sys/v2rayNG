@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ФАЙЛ: V2rayNG/app/src/main/res/layout/activity_main.xml
-  Заменяет оригинальный файл полностью.
-  Структура: CoordinatorLayout > AppBarLayout + NestedScrollView + BottomNavigationView
-  Все ID оригинала сохранены там где на них ссылается MainActivity.kt
--->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,7 +20,8 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:paddingHorizontal="8dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             app:contentInsetStart="0dp"
             app:contentInsetEnd="0dp">
 
@@ -43,12 +38,12 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:background="@drawable/bg_logo_icon">
-                    <ImageView
+
+                    <View
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_logo_eye"
-                        android:tint="@color/accent" />
+                        android:background="@color/accent" />
                 </FrameLayout>
 
                 <TextView
@@ -58,8 +53,7 @@
                     android:text="@string/app_name"
                     android:textColor="@color/text_primary"
                     android:textSize="17sp"
-                    android:letterSpacing="0.02"
-                    android:fontFamily="@font/inter_semibold" />
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <!-- Right icons -->
@@ -76,7 +70,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_notifications"
+                    android:src="@drawable/ic_action_more"
                     android:tint="@color/icon_secondary"
                     android:contentDescription="Logs" />
 
@@ -85,7 +79,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_settings"
+                    android:src="@drawable/ic_settings_24dp"
                     android:tint="@color/icon_secondary"
                     android:contentDescription="Settings" />
             </LinearLayout>
@@ -105,9 +99,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- ═══════════════════════════════════════════════ -->
-            <!-- HERO — кнопка подключения                       -->
-            <!-- ═══════════════════════════════════════════════ -->
+            <!-- HERO -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -117,7 +109,6 @@
                 android:paddingTop="28dp"
                 android:paddingBottom="24dp">
 
-                <!-- Кнопка подключения — fab, ID нужен MainActivity.kt -->
                 <FrameLayout
                     android:layout_width="180dp"
                     android:layout_height="180dp"
@@ -131,7 +122,7 @@
                         android:layout_gravity="center"
                         android:background="@drawable/bg_connect_ring" />
 
-                    <!-- Основная кнопка -->
+                    <!-- Кнопка подключения -->
                     <FrameLayout
                         android:id="@+id/fab"
                         android:layout_width="140dp"
@@ -147,31 +138,30 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:orientation="vertical"
-                            android:gravity="center"
-                            android:gap="8dp">
+                            android:gravity="center">
 
                             <ImageView
                                 android:id="@+id/iv_connect_icon"
                                 android:layout_width="36dp"
                                 android:layout_height="36dp"
-                                android:src="@drawable/ic_lock"
+                                android:src="@drawable/ic_action_more"
                                 android:tint="@color/icon_secondary" />
 
                             <TextView
                                 android:id="@+id/tv_connect_label"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
                                 android:text="@string/connect_label_off"
                                 android:textColor="@color/icon_secondary"
                                 android:textSize="10sp"
                                 android:letterSpacing="0.1"
-                                android:fontFamily="@font/inter_medium"
                                 android:textAllCaps="true" />
                         </LinearLayout>
                     </FrameLayout>
                 </FrameLayout>
 
-                <!-- Статус-пилюля — layout_test, ID нужен MainActivity.kt -->
+                <!-- Статус-пилюля -->
                 <FrameLayout
                     android:id="@+id/layout_test"
                     android:layout_width="wrap_content"
@@ -179,72 +169,75 @@
                     android:layout_marginTop="20dp"
                     android:background="@drawable/bg_status_pill"
                     android:clickable="true"
-                    android:focusable="true"
-                    android:padding="1dp">
+                    android:focusable="true">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="6dp"
-                        android:gap="6dp">
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp">
 
                         <View
                             android:id="@+id/status_dot"
                             android:layout_width="7dp"
                             android:layout_height="7dp"
+                            android:layout_marginEnd="6dp"
                             android:background="@drawable/bg_status_dot" />
 
-                        <!-- tv_test_state — ID нужен MainActivity.kt -->
                         <TextView
                             android:id="@+id/tv_test_state"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/connection_not_connected"
                             android:textColor="@color/text_tertiary"
-                            android:textSize="12sp"
-                            android:fontFamily="@font/inter_medium" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </FrameLayout>
 
             </LinearLayout>
 
-            <!-- ═══════════════════════════════════════════════ -->
-            <!-- STATS ROW                                       -->
-            <!-- ═══════════════════════════════════════════════ -->
+            <!-- STATS ROW -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:background="@color/bg_primary"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="14dp"
-                android:gap="10dp">
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp">
 
                 <!-- Upload -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
                     android:orientation="vertical"
                     android:background="@drawable/bg_stat_card"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="10dp">
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:gap="4dp"
                         android:layout_marginBottom="4dp">
-                        <ImageView
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:src="@drawable/ic_arrow_up"
-                            android:tint="@color/text_tertiary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="↑ "
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -252,8 +245,7 @@
                             android:textColor="@color/text_tertiary"
                             android:textSize="10sp"
                             android:letterSpacing="0.05"
-                            android:textAllCaps="true"
-                            android:fontFamily="@font/inter_medium" />
+                            android:textAllCaps="true" />
                     </LinearLayout>
 
                     <TextView
@@ -263,7 +255,7 @@
                         android:text="—"
                         android:textColor="@color/text_secondary"
                         android:textSize="15sp"
-                        android:fontFamily="@font/inter_semibold" />
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Download -->
@@ -271,23 +263,29 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
                     android:orientation="vertical"
                     android:background="@drawable/bg_stat_card"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="10dp">
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:gap="4dp"
                         android:layout_marginBottom="4dp">
-                        <ImageView
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:src="@drawable/ic_arrow_down"
-                            android:tint="@color/text_tertiary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="↓ "
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -295,8 +293,7 @@
                             android:textColor="@color/text_tertiary"
                             android:textSize="10sp"
                             android:letterSpacing="0.05"
-                            android:textAllCaps="true"
-                            android:fontFamily="@font/inter_medium" />
+                            android:textAllCaps="true" />
                     </LinearLayout>
 
                     <TextView
@@ -306,7 +303,7 @@
                         android:text="—"
                         android:textColor="@color/text_secondary"
                         android:textSize="15sp"
-                        android:fontFamily="@font/inter_semibold" />
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- Session -->
@@ -314,23 +311,28 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:layout_marginStart="5dp"
                     android:orientation="vertical"
                     android:background="@drawable/bg_stat_card"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="10dp">
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:gap="4dp"
                         android:layout_marginBottom="4dp">
-                        <ImageView
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:src="@drawable/ic_clock"
-                            android:tint="@color/text_tertiary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏱ "
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -338,8 +340,7 @@
                             android:textColor="@color/text_tertiary"
                             android:textSize="10sp"
                             android:letterSpacing="0.05"
-                            android:textAllCaps="true"
-                            android:fontFamily="@font/inter_medium" />
+                            android:textAllCaps="true" />
                     </LinearLayout>
 
                     <TextView
@@ -349,20 +350,19 @@
                         android:text="—"
                         android:textColor="@color/text_secondary"
                         android:textSize="15sp"
-                        android:fontFamily="@font/inter_semibold" />
+                        android:textStyle="bold" />
                 </LinearLayout>
 
             </LinearLayout>
 
-            <!-- ═══════════════════════════════════════════════ -->
-            <!-- SERVERS SECTION HEADER                          -->
-            <!-- ═══════════════════════════════════════════════ -->
+            <!-- SERVERS HEADER -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="20dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
                 android:paddingTop="14dp"
                 android:paddingBottom="8dp">
 
@@ -374,8 +374,7 @@
                     android:textColor="@color/text_tertiary"
                     android:textSize="11sp"
                     android:letterSpacing="0.05"
-                    android:textAllCaps="true"
-                    android:fontFamily="@font/inter_medium" />
+                    android:textAllCaps="true" />
 
                 <TextView
                     android:id="@+id/tv_see_all"
@@ -384,25 +383,22 @@
                     android:text="@string/see_all_label"
                     android:textColor="@color/accent"
                     android:textSize="12sp"
-                    android:fontFamily="@font/inter_medium"
                     android:clickable="true"
                     android:focusable="true" />
             </LinearLayout>
 
-            <!-- ═══════════════════════════════════════════════ -->
-            <!-- RECYCLER VIEW — список серверов                 -->
-            <!-- recycler_view — ID нужен MainActivity.kt        -->
-            <!-- ═══════════════════════════════════════════════ -->
+            <!-- RECYCLER VIEW -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="20dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
                 android:paddingBottom="8dp"
                 android:nestedScrollingEnabled="false"
                 android:clipToPadding="false" />
 
-            <!-- Нижний отступ под bottom nav -->
+            <!-- Отступ под bottom nav -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="72dp" />
@@ -410,9 +406,7 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- BOTTOM NAVIGATION                                       -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- BOTTOM NAVIGATION -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
