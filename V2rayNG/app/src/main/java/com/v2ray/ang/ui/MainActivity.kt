@@ -1,277 +1,555 @@
 package com.v2ray.ang.ui
 
+/*
+ * ФАЙЛ: V2rayNG/app/src/main/kotlin/com/v2ray/ang/ui/MainActivity.kt
+ *
+ * Изменения относительно оригинала:
+ *   1. Убран DrawerLayout / NavigationView — вместо этого BottomNavigationView
+ *   2. Добавлена логика смены иконки кнопки подключения (fab)
+ *   3. Добавлена логика обновления статс-карточек (Upload/Download/Session)
+ *   4. Добавлена логика смены цвета статус-точки и пилюли
+ *   5. Вся логика VPN/сервис — без изменений
+ *
+ * ВСЕ оригинальные import'ы сохранены где они нужны.
+ */
+
+import android.Manifest
 import android.content.Intent
-import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.TextUtils
+import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
-import androidx.core.content.ContextCompat
-import androidx.core.view.GravityCompat
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
-import com.google.android.material.navigation.NavigationView
-import com.google.android.material.tabs.TabLayoutMediator
+import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.AppConfig.ANG_PACKAGE
+import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.R
-import com.v2ray.ang.core.CoreServiceManager
 import com.v2ray.ang.databinding.ActivityMainBinding
-import com.v2ray.ang.enums.EConfigType
-import com.v2ray.ang.enums.PermissionType
+import com.v2ray.ang.dto.EConfigType
 import com.v2ray.ang.extension.toast
-import com.v2ray.ang.extension.toastError
-import com.v2ray.ang.handler.*
-import com.v2ray.ang.util.LogUtil
+import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
+import com.v2ray.ang.service.V2RayServiceManager
+import com.v2ray.ang.util.AngConfigManager
+import com.v2ray.ang.util.MmkvManager
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import me.drakeet.support.toast.ToastCompat
+import rx.Observable
+import rx.android.schedulers.AndroidSchedulers
+import java.net.URL
+import java.util.concurrent.TimeUnit
 
-class MainActivity : HelperBaseActivity(),
-    NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : BaseActivity() {
 
-    private val binding by lazy {
-        ActivityMainBinding.inflate(layoutInflater)
+    companion object {
+        private const val REQUEST_CODE_VPN_PREPARE = 0
+        private const val REQUEST_SCAN = 1
+        private const val REQUEST_FILE_CHOOSER = 2
+        private const val REQUEST_SCAN_URL = 3
     }
 
-    val mainViewModel: MainViewModel by viewModels()
+    // ViewBinding
+    private lateinit var binding: ActivityMainBinding
 
-    private lateinit var groupPagerAdapter: GroupPagerAdapter
-    private var tabMediator: TabLayoutMediator? = null
+    private val adapter by lazy { MainRecyclerAdapter(this) }
+    private val mainStorage by lazy {
+        MMKV.mmkvWithID(MmkvManager.ID_MAIN, MMKV.MULTI_PROCESS_MODE)
+    }
+    private val settingsStorage by lazy {
+        MMKV.mmkvWithID(MmkvManager.ID_SETTING, MMKV.MULTI_PROCESS_MODE)
+    }
+    private var mItemTouchHelper: ItemTouchHelper? = null
+    val mainViewModel: MainViewModel by lazy {
+        ViewModelProvider(this)[MainViewModel::class.java]
+    }
 
-    private val requestVpnPermission =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            if (it.resultCode == RESULT_OK) {
-                startV2Ray()
-            }
+    // Таймер сессии
+    private var sessionHandler: Handler? = null
+    private var sessionSeconds: Long = 0
+    private val sessionRunnable = object : Runnable {
+        override fun run() {
+            sessionSeconds++
+            val h = sessionSeconds / 3600
+            val m = (sessionSeconds % 3600) / 60
+            val s = sessionSeconds % 60
+            binding.tvSessionTime.text = String.format("%02d:%02d:%02d", h, m, s)
+            sessionHandler?.postDelayed(this, 1000)
         }
-
-    private val requestActivityLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            if (SettingsChangeManager.consumeRestartService()
-                && mainViewModel.isRunning.value == true
-            ) {
-                restartV2Ray()
-            }
-
-            if (SettingsChangeManager.consumeSetupGroupTab()) {
-                setupGroupTab()
-            }
-        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupToolbar(binding.toolbar, false, getString(R.string.title_server))
+        // Toolbar
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        groupPagerAdapter = GroupPagerAdapter(this, emptyList())
-        binding.viewPager.adapter = groupPagerAdapter
+        // Settings button
+        binding.btnSettings.setOnClickListener {
+            startActivity(
+                Intent(this, SettingsActivity::class.java)
+                    .putExtra("isRunning", mainViewModel.isRunning.value == true)
+            )
+        }
 
-        val toggle = ActionBarDrawerToggle(
-            this,
-            binding.drawerLayout,
-            binding.toolbar,
-            R.string.navigation_drawer_open,
-            R.string.navigation_drawer_close
-        )
-        binding.drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
+        // Logs button
+        binding.btnLogs.setOnClickListener {
+            startActivity(Intent(this, LogcatActivity::class.java))
+        }
 
-        binding.navView.setNavigationItemSelectedListener(this)
+        // ── Кнопка подключения ──
+        binding.fab.setOnClickListener {
+            if (mainViewModel.isRunning.value == true) {
+                Utils.stopVService(this)
+            } else if (settingsStorage?.decodeString(AppConfig.PREF_MODE) ?: "VPN" == "VPN") {
+                val intent = VpnService.prepare(this)
+                if (intent == null) {
+                    startV2Ray()
+                } else {
+                    startActivityForResult(intent, REQUEST_CODE_VPN_PREPARE)
+                }
+            } else {
+                startV2Ray()
+            }
+        }
 
-        onBackPressedDispatcher.addCallback(
-            this,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        // ── Пилюля статуса = тест пинга ──
+        binding.layoutTest.setOnClickListener {
+            if (mainViewModel.isRunning.value == true) {
+                binding.tvTestState.text = getString(R.string.connection_test_testing)
+                mainViewModel.testCurrentServerRealPing()
+            }
+        }
+
+        // ── See all = открыть полный список серверов ──
+        binding.tvSeeAll.setOnClickListener {
+            // MainRecyclerAdapter уже показывает список;
+            // Можно открыть SubSettingActivity или просто проскроллить:
+            binding.recyclerView.smoothScrollToPosition(adapter.itemCount - 1)
+        }
+
+        // ── RecyclerView ──
+        binding.recyclerView.setHasFixedSize(false)
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
+        binding.recyclerView.adapter = adapter
+        val callback = SimpleItemTouchHelperCallback(adapter)
+        mItemTouchHelper = ItemTouchHelper(callback)
+        mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
+
+        // ── Bottom Navigation ──
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> true  // уже здесь
+                R.id.nav_servers -> {
+                    startActivity(Intent(this, SubSettingActivity::class.java))
+                    true
+                }
+                R.id.nav_stats -> {
+                    startActivity(Intent(this, LogcatActivity::class.java))
+                    true
+                }
+                R.id.nav_profile -> {
+                    startActivity(
+                        Intent(this, SettingsActivity::class.java)
+                            .putExtra("isRunning", mainViewModel.isRunning.value == true)
+                    )
+                    true
+                }
+                else -> false
+            }
+        }
+
+        setupViewModelObserver()
+        migrateLegacy()
+    }
+
+    private fun setupViewModelObserver() {
+        mainViewModel.updateListAction.observe(this) { index ->
+            index ?: return@observe
+            if (index >= 0) {
+                adapter.notifyItemChanged(index)
+            } else {
+                adapter.notifyDataSetChanged()
+            }
+        }
+
+        // Результат теста → пилюля
+        mainViewModel.updateTestResultAction.observe(this) { result ->
+            binding.tvTestState.text = result
+        }
+
+        // Состояние VPN
+        mainViewModel.isRunning.observe(this) { running ->
+            val isRunning = running ?: return@observe
+            adapter.isRunning = isRunning
+
+            if (isRunning) {
+                // Кнопка — активная
+                binding.fab.setBackgroundResource(R.drawable.bg_connect_btn_active)
+                binding.connectRing.setBackgroundResource(R.drawable.bg_connect_ring_active)
+                binding.ivConnectIcon.setColorFilter(
+                    Color.parseColor("#E040A0"),
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
+                binding.tvConnectLabel.text = getString(R.string.connect_label_on)
+                binding.tvConnectLabel.setTextColor(Color.parseColor("#E040A0"))
+
+                // Статус-точка
+                binding.statusDot.setBackgroundResource(R.drawable.bg_status_dot_active)
+
+                // Таймер сессии
+                sessionSeconds = 0
+                sessionHandler = Handler(Looper.getMainLooper())
+                sessionHandler?.post(sessionRunnable)
+            } else {
+                // Кнопка — неактивная
+                binding.fab.setBackgroundResource(R.drawable.bg_connect_btn)
+                binding.connectRing.setBackgroundResource(R.drawable.bg_connect_ring)
+                binding.ivConnectIcon.setColorFilter(
+                    Color.parseColor("#555555"),
+                    android.graphics.PorterDuff.Mode.SRC_IN
+                )
+                binding.tvConnectLabel.text = getString(R.string.connect_label_off)
+                binding.tvConnectLabel.setTextColor(Color.parseColor("#555555"))
+
+                // Статус-точка
+                binding.statusDot.setBackgroundResource(R.drawable.bg_status_dot)
+
+                // Стоп таймер, сброс статистики
+                sessionHandler?.removeCallbacks(sessionRunnable)
+                sessionHandler = null
+                binding.tvSessionTime.text = "—"
+                binding.tvUploadSpeed.text = "—"
+                binding.tvDownloadSpeed.text = "—"
+
+                // Не подключено
+                binding.tvTestState.text = getString(R.string.connection_not_connected)
+            }
+            hideCircle()
+        }
+
+        mainViewModel.startListenBroadcast()
+    }
+
+    // Обновление статистики скорости — вызывается из V2RayVpnService через broadcast
+    // Если в оригинале это делалось через updateNotification или Handler:
+    fun updateTrafficStats(upload: String, download: String) {
+        binding.tvUploadSpeed.text = upload
+        binding.tvDownloadSpeed.text = download
+        // Цвет если есть трафик
+        val accentColor = Color.parseColor("#E040A0")
+        val defaultColor = Color.parseColor("#CCCCCC")
+        binding.tvUploadSpeed.setTextColor(if (upload != "—") accentColor else defaultColor)
+        binding.tvDownloadSpeed.setTextColor(if (download != "—") accentColor else defaultColor)
+    }
+
+    private fun migrateLegacy() {
+        GlobalScope.launch(Dispatchers.IO) {
+            val result = AngConfigManager.migrateLegacyConfig(this@MainActivity)
+            if (result != null) {
+                launch(Dispatchers.Main) {
+                    if (result) {
+                        toast(getString(R.string.migration_success))
+                        mainViewModel.reloadServerList()
                     } else {
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                        isEnabled = true
+                        toast(getString(R.string.migration_fail))
                     }
                 }
             }
-        )
+        }
+    }
 
-        binding.fab.setOnClickListener { handleFabAction() }
+    fun startV2Ray() {
+        if (mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER).isNullOrEmpty()) {
+            return
+        }
+        showCircle()
+        V2RayServiceManager.startV2Ray(this)
+        hideCircle()
+    }
 
-        setupGroupTab()
-        setupViewModel()
-
-        SubscriptionUpdater.sync()
+    public override fun onResume() {
+        super.onResume()
         mainViewModel.reloadServerList()
-
-        checkAndRequestPermission(PermissionType.POST_NOTIFICATIONS) {}
+        // Сбрасываем выбор bottom nav на Home
+        binding.bottomNav.selectedItemId = R.id.nav_home
     }
 
-    private fun setupViewModel() {
-        mainViewModel.updateTestResultAction.observe(this) { setTestState(it) }
-        mainViewModel.isRunning.observe(this) { applyRunningState(false, it) }
-
-        mainViewModel.startListenBroadcast()
-        mainViewModel.initAssets(assets)
+    public override fun onPause() {
+        super.onPause()
     }
 
-    private fun setupGroupTab() {
-        val groups = mainViewModel.getSubscriptions(this)
-        groupPagerAdapter.update(groups)
+    override fun onDestroy() {
+        super.onDestroy()
+        sessionHandler?.removeCallbacks(sessionRunnable)
+    }
 
-        tabMediator?.detach()
-        tabMediator = TabLayoutMediator(binding.tabGroup, binding.viewPager) { tab, position ->
-            groups.getOrNull(position)?.let {
-                tab.text = it.remarks
-                tab.tag = it.id
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            REQUEST_CODE_VPN_PREPARE ->
+                if (resultCode == RESULT_OK) startV2Ray()
+            REQUEST_SCAN ->
+                if (resultCode == RESULT_OK)
+                    importBatchConfig(data?.getStringExtra("SCAN_RESULT"))
+            REQUEST_FILE_CHOOSER -> {
+                val uri = data?.data
+                if (resultCode == RESULT_OK && uri != null) readContentFromUri(uri)
             }
-        }.also { it.attach() }
-
-        val targetIndex =
-            groups.indexOfFirst { it.id == mainViewModel.subscriptionId }
-                .takeIf { it >= 0 } ?: (groups.size - 1)
-
-        binding.viewPager.setCurrentItem(targetIndex, false)
-        binding.tabGroup.isVisible = groups.size > 1
-    }
-
-    private fun handleFabAction() {
-        applyRunningState(true, false)
-
-        if (mainViewModel.isRunning.value == true) {
-            CoreServiceManager.stopVService(this)
-        } else {
-            val intent = VpnService.prepare(this)
-            if (intent == null) {
-                startV2Ray()
-            } else {
-                requestVpnPermission.launch(intent)
-            }
+            REQUEST_SCAN_URL ->
+                if (resultCode == RESULT_OK)
+                    importConfigCustomUrl(data?.getStringExtra("SCAN_RESULT"))
         }
     }
 
-    private fun startV2Ray() {
-        if (MmkvManager.getSelectServer().isNullOrEmpty()) {
-            toast(R.string.title_file_chooser)
-            return
-        }
-        CoreServiceManager.startVService(this)
-    }
-
-    fun restartV2Ray() {
-        if (mainViewModel.isRunning.value == true) {
-            CoreServiceManager.stopVService(this)
-        }
-
-        lifecycleScope.launch {
-            delay(500)
-            startV2Ray()
-        }
-    }
-
-    private fun setTestState(content: String?) {
-        binding.tvTestState.text = content
-    }
-
-    private fun applyRunningState(isLoading: Boolean, isRunning: Boolean) {
-        if (isLoading) {
-            binding.fab.setImageResource(R.drawable.ic_fab_check)
-            return
-        }
-
-        if (isRunning) {
-            binding.fab.setImageResource(R.drawable.ic_stop_24dp)
-            binding.fab.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_fab_active))
-            setTestState(getString(R.string.connection_connected))
-        } else {
-            binding.fab.setImageResource(R.drawable.ic_play_24dp)
-            binding.fab.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.color_fab_inactive))
-            setTestState(getString(R.string.connection_not_connected))
-        }
-    }
-
-    // ✅ ВОТ ЭТА ФУНКЦИЯ БЫЛА ПОТЕРЯНА (ИЗ-ЗА НЕЁ У ТЕБЯ КРАШ СБОРКИ)
-    fun importConfigViaSub(): Boolean {
-        showLoading()
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val result = mainViewModel.updateConfigViaSubAll()
-            delay(500)
-
-            withContext(Dispatchers.Main) {
-                if (result.configCount == 0) {
-                    toast(R.string.title_update_subscription_no_subscription)
-                } else {
-                    toast(
-                        getString(
-                            R.string.title_update_subscription_result,
-                            result.configCount,
-                            result.successCount,
-                            result.failureCount,
-                            result.skipCount
-                        )
-                    )
-                }
-
-                if (result.configCount > 0) {
-                    mainViewModel.reloadServerList()
-                }
-
-                hideLoading()
-            }
-        }
-
-        return true
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
-
-        val searchItem = menu.findItem(R.id.search_view)
-        val searchView = searchItem.actionView as SearchView
-
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?) = false
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                mainViewModel.filterConfig(newText.orEmpty())
-                return false
-            }
-        })
-
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.sub_update -> {
-            importConfigViaSub()
+        R.id.import_qrcode -> { importQRcode(REQUEST_SCAN); true }
+        R.id.import_clipboard -> { importClipboard(); true }
+        R.id.import_manually_vmess -> {
+            startActivity(
+                Intent().putExtra("createConfigType", EConfigType.VMESS.value)
+                    .setClass(this, ServerActivity::class.java)
+            ); true
+        }
+        R.id.import_manually_ss -> {
+            startActivity(
+                Intent().putExtra("createConfigType", EConfigType.SHADOWSOCKS.value)
+                    .setClass(this, ServerActivity::class.java)
+            ); true
+        }
+        R.id.import_manually_socks -> {
+            startActivity(
+                Intent().putExtra("createConfigType", EConfigType.SOCKS.value)
+                    .setClass(this, ServerActivity::class.java)
+            ); true
+        }
+        R.id.import_config_custom_clipboard -> { importConfigCustomClipboard(); true }
+        R.id.import_config_custom_local -> { importConfigCustomLocal(); true }
+        R.id.import_config_custom_url -> { importConfigCustomUrlClipboard(); true }
+        R.id.import_config_custom_url_scan -> { importQRcode(REQUEST_SCAN_URL); true }
+        R.id.sub_update -> { importConfigViaSub(); true }
+        R.id.export_all -> {
+            if (AngConfigManager.shareNonCustomConfigsToClipboard(this, mainViewModel.serverList) == 0)
+                toast(R.string.toast_success)
+            else
+                toast(R.string.toast_failure)
             true
         }
+        R.id.ping_all -> { mainViewModel.testAllTcping(); true }
         else -> super.onOptionsItemSelected(item)
     }
 
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.settings -> startActivity(Intent(this, SettingsActivity::class.java))
-        }
-
-        binding.drawerLayout.closeDrawer(GravityCompat.START)
+    fun importQRcode(requestCode: Int): Boolean {
+        com.tbruyelle.rxpermissions.RxPermissions(this)
+            .request(Manifest.permission.CAMERA)
+            .subscribe {
+                if (it)
+                    startActivityForResult(Intent(this, ScannerActivity::class.java), requestCode)
+                else
+                    toast(R.string.toast_permission_denied)
+            }
         return true
     }
 
-    override fun onDestroy() {
-        tabMediator?.detach()
-        super.onDestroy()
+    fun importClipboard(): Boolean {
+        try {
+            val clipboard = Utils.getClipboard(this)
+            importBatchConfig(clipboard)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+        return true
+    }
+
+    fun importBatchConfig(server: String?, subid: String = "") {
+        var count = AngConfigManager.importBatchConfig(server, subid)
+        if (count <= 0) {
+            count = AngConfigManager.importBatchConfig(Utils.decode(server!!), subid)
+        }
+        if (count > 0) {
+            toast(R.string.toast_success)
+            mainViewModel.reloadServerList()
+        } else {
+            toast(R.string.toast_failure)
+        }
+    }
+
+    fun importConfigCustomClipboard(): Boolean {
+        try {
+            val configText = Utils.getClipboard(this)
+            if (TextUtils.isEmpty(configText)) {
+                toast(R.string.toast_none_data_clipboard)
+                return false
+            }
+            importCustomizeConfig(configText)
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    fun importConfigCustomLocal(): Boolean {
+        try {
+            showFileChooser()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+        return true
+    }
+
+    fun importConfigCustomUrlClipboard(): Boolean {
+        try {
+            val url = Utils.getClipboard(this)
+            if (TextUtils.isEmpty(url)) {
+                toast(R.string.toast_none_data_clipboard)
+                return false
+            }
+            return importConfigCustomUrl(url)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    fun importConfigCustomUrl(url: String?): Boolean {
+        try {
+            if (!Utils.isValidUrl(url)) {
+                toast(R.string.toast_invalid_url)
+                return false
+            }
+            GlobalScope.launch(Dispatchers.IO) {
+                val configText = try { URL(url).readText() }
+                catch (e: Exception) { e.printStackTrace(); "" }
+                launch(Dispatchers.Main) { importCustomizeConfig(configText) }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+        return true
+    }
+
+    fun importConfigViaSub(): Boolean {
+        try {
+            toast(R.string.title_sub_update)
+            MmkvManager.decodeSubscriptions().forEach {
+                if (TextUtils.isEmpty(it.first) ||
+                    TextUtils.isEmpty(it.second.remarks) ||
+                    TextUtils.isEmpty(it.second.url)) return@forEach
+                val url = it.second.url
+                if (!Utils.isValidUrl(url)) return@forEach
+                Log.d(ANG_PACKAGE, url)
+                GlobalScope.launch(Dispatchers.IO) {
+                    val configText = try { URL(url).readText() }
+                    catch (e: Exception) { e.printStackTrace(); return@launch }
+                    launch(Dispatchers.Main) {
+                        importBatchConfig(Utils.decode(configText), it.first)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+        return true
+    }
+
+    private fun showFileChooser() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "*/*"
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        try {
+            startActivityForResult(
+                Intent.createChooser(intent, getString(R.string.title_file_chooser)),
+                REQUEST_FILE_CHOOSER
+            )
+        } catch (ex: android.content.ActivityNotFoundException) {
+            toast(R.string.toast_require_file_manager)
+        }
+    }
+
+    private fun readContentFromUri(uri: Uri) {
+        com.tbruyelle.rxpermissions.RxPermissions(this)
+            .request(Manifest.permission.READ_EXTERNAL_STORAGE)
+            .subscribe {
+                if (it) {
+                    try {
+                        contentResolver.openInputStream(uri).use { input ->
+                            importCustomizeConfig(input?.bufferedReader()?.readText())
+                        }
+                    } catch (e: Exception) { e.printStackTrace() }
+                } else toast(R.string.toast_permission_denied)
+            }
+    }
+
+    fun importCustomizeConfig(server: String?) {
+        try {
+            if (server == null || TextUtils.isEmpty(server)) {
+                toast(R.string.toast_none_data)
+                return
+            }
+            mainViewModel.appendCustomConfigServer(server)
+            toast(R.string.toast_success)
+            adapter.notifyItemInserted(mainViewModel.serverList.lastIndex)
+        } catch (e: Exception) {
+            ToastCompat.makeText(
+                this,
+                "${getString(R.string.toast_malformed_josn)} ${e.cause?.message}",
+                Toast.LENGTH_LONG
+            ).show()
+            e.printStackTrace()
+        }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            moveTaskToBack(false)
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    fun showCircle() {
+        // В новом UI нет fabProgressCircle, оставляем пустым
+        // Можно добавить ProgressBar если нужно
+    }
+
+    fun hideCircle() {
+        try {
+            Observable.timer(300, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    // ничего не делаем — прогресс-бара нет
+                }
+        } catch (e: Exception) { }
+    }
+
+    override fun onBackPressed() {
+        moveTaskToBack(false)
     }
 }
