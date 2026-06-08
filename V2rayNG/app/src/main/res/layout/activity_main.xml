@@ -1,238 +1,428 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  ФАЙЛ: V2rayNG/app/src/main/res/layout/activity_main.xml
+  Заменяет оригинальный файл полностью.
+  Структура: CoordinatorLayout > AppBarLayout + NestedScrollView + BottomNavigationView
+  Все ID оригинала сохранены там где на них ссылается MainActivity.kt
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
+    android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_primary"
     android:fitsSystemWindows="true">
 
-    <!-- MAIN CONTENT -->
-    <LinearLayout
-        android:id="@+id/main_content"
+    <!-- TOP BAR -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_primary"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:paddingHorizontal="8dp"
+            app:contentInsetStart="0dp"
+            app:contentInsetEnd="0dp">
+
+            <!-- Logo + Title -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_gravity="start"
+                android:paddingStart="8dp">
+
+                <FrameLayout
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_logo_icon">
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_logo_eye"
+                        android:tint="@color/accent" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/app_name"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:letterSpacing="0.02"
+                    android:fontFamily="@font/inter_semibold" />
+            </LinearLayout>
+
+            <!-- Right icons -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_gravity="end"
+                android:paddingEnd="4dp">
+
+                <ImageButton
+                    android:id="@+id/btn_logs"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_notifications"
+                    android:tint="@color/icon_secondary"
+                    android:contentDescription="Logs" />
+
+                <ImageButton
+                    android:id="@+id/btn_settings"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_settings"
+                    android:tint="@color/icon_secondary"
+                    android:contentDescription="Settings" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- SCROLLABLE CONTENT -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@color/md_theme_background">
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- TOP BAR -->
-        <com.google.android.material.appbar.AppBarLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/md_theme_surface"
-            app:elevation="0dp">
+            android:orientation="vertical">
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="@color/md_theme_surface" />
-        </com.google.android.material.appbar.AppBarLayout>
-
-        <!-- PROGRESS -->
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progress_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:indeterminate="true"
-            android:visibility="gone"
-            app:indicatorColor="@color/color_fab_active" />
-
-        <!-- HERO CARD -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/divider_color_light">
-
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- HERO — кнопка подключения                       -->
+            <!-- ═══════════════════════════════════════════════ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:gravity="center_horizontal"
+                android:background="@color/bg_secondary"
+                android:paddingTop="28dp"
+                android:paddingBottom="24dp">
 
-                <TextView
+                <!-- Кнопка подключения — fab, ID нужен MainActivity.kt -->
+                <FrameLayout
+                    android:layout_width="180dp"
+                    android:layout_height="180dp"
+                    android:gravity="center">
+
+                    <!-- Внешнее кольцо -->
+                    <View
+                        android:id="@+id/connect_ring"
+                        android:layout_width="160dp"
+                        android:layout_height="160dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_connect_ring" />
+
+                    <!-- Основная кнопка -->
+                    <FrameLayout
+                        android:id="@+id/fab"
+                        android:layout_width="140dp"
+                        android:layout_height="140dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_connect_btn"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:gap="8dp">
+
+                            <ImageView
+                                android:id="@+id/iv_connect_icon"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:src="@drawable/ic_lock"
+                                android:tint="@color/icon_secondary" />
+
+                            <TextView
+                                android:id="@+id/tv_connect_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/connect_label_off"
+                                android:textColor="@color/icon_secondary"
+                                android:textSize="10sp"
+                                android:letterSpacing="0.1"
+                                android:fontFamily="@font/inter_medium"
+                                android:textAllCaps="true" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </FrameLayout>
+
+                <!-- Статус-пилюля — layout_test, ID нужен MainActivity.kt -->
+                <FrameLayout
+                    android:id="@+id/layout_test"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sav3nokRay"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
-                    android:textColor="@color/color_text_primary"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Secure tunnel"
-                    android:textSize="12sp"
-                    android:textColor="@color/color_text_secondary"/>
-
-                <!-- CONNECT BUTTON -->
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_status_pill"
                     android:clickable="true"
                     android:focusable="true"
-                    android:contentDescription="@string/tasker_start_service"
-                    android:src="@drawable/ic_play_24dp"
-                    app:maxImageSize="48dp"
-                    app:tint="@color/colorWhite"
-                    app:backgroundTint="@color/color_fab_inactive" />
+                    android:padding="1dp">
 
-                <!-- STATUS -->
-                <TextView
-                    android:id="@+id/tv_test_state"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/connection_test_pending"
-                    android:textColor="@color/color_text_secondary"
-                    android:textSize="13sp"/>
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="6dp"
+                        android:gap="6dp">
+
+                        <View
+                            android:id="@+id/status_dot"
+                            android:layout_width="7dp"
+                            android:layout_height="7dp"
+                            android:background="@drawable/bg_status_dot" />
+
+                        <!-- tv_test_state — ID нужен MainActivity.kt -->
+                        <TextView
+                            android:id="@+id/tv_test_state"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/connection_not_connected"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/inter_medium" />
+                    </LinearLayout>
+                </FrameLayout>
+
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- STATS (optional visual only) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- STATS ROW                                       -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                app:cardCornerRadius="16dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/divider_color_light">
+                android:orientation="horizontal"
+                android:background="@color/bg_primary"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="14dp"
+                android:gap="10dp">
 
+                <!-- Upload -->
                 <LinearLayout
-                    android:padding="14dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:background="@drawable/bg_stat_card"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="10dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:gap="4dp"
+                        android:layout_marginBottom="4dp">
+                        <ImageView
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:src="@drawable/ic_arrow_up"
+                            android:tint="@color/text_tertiary" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Upload"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.05"
+                            android:textAllCaps="true"
+                            android:fontFamily="@font/inter_medium" />
+                    </LinearLayout>
 
                     <TextView
-                        android:text="Upload"
-                        android:textSize="11sp"
-                        android:textColor="@color/color_text_secondary"/>
-
-                    <TextView
+                        android:id="@+id/tv_upload_speed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="—"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/color_fab_active"/>
+                        android:textColor="@color/text_secondary"
+                        android:textSize="15sp"
+                        android:fontFamily="@font/inter_semibold" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+                <!-- Download -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_stat_card"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="10dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:gap="4dp"
+                        android:layout_marginBottom="4dp">
+                        <ImageView
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:src="@drawable/ic_arrow_down"
+                            android:tint="@color/text_tertiary" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Download"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.05"
+                            android:textAllCaps="true"
+                            android:fontFamily="@font/inter_medium" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_download_speed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="15sp"
+                        android:fontFamily="@font/inter_semibold" />
+                </LinearLayout>
+
+                <!-- Session -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_stat_card"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="10dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:gap="4dp"
+                        android:layout_marginBottom="4dp">
+                        <ImageView
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:src="@drawable/ic_clock"
+                            android:tint="@color/text_tertiary" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Session"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="10sp"
+                            android:letterSpacing="0.05"
+                            android:textAllCaps="true"
+                            android:fontFamily="@font/inter_medium" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_session_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="15sp"
+                        android:fontFamily="@font/inter_semibold" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- SERVERS SECTION HEADER                          -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="6dp"
-                app:cardCornerRadius="16dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/divider_color_light">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="8dp">
 
-                <LinearLayout
-                    android:padding="14dp"
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/servers_label"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.05"
+                    android:textAllCaps="true"
+                    android:fontFamily="@font/inter_medium" />
 
-                    <TextView
-                        android:text="Download"
-                        android:textSize="11sp"
-                        android:textColor="@color/color_text_secondary"/>
+                <TextView
+                    android:id="@+id/tv_see_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/see_all_label"
+                    android:textColor="@color/accent"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/inter_medium"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
-                    <TextView
-                        android:text="—"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/color_fab_active"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- RECYCLER VIEW — список серверов                 -->
+            <!-- recycler_view — ID нужен MainActivity.kt        -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_view"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:cardCornerRadius="16dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/divider_color_light">
+                android:paddingHorizontal="20dp"
+                android:paddingBottom="8dp"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false" />
 
-                <LinearLayout
-                    android:padding="14dp"
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:text="Session"
-                        android:textSize="11sp"
-                        android:textColor="@color/color_text_secondary"/>
-
-                    <TextView
-                        android:text="—"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/color_fab_active"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            <!-- Нижний отступ под bottom nav -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="72dp" />
 
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
-        <!-- TAB GROUP (IMPORTANT) -->
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:tabIndicatorColor="@color/color_fab_active"
-            app:tabSelectedTextColor="@color/color_fab_active"
-            app:tabTextColor="@color/color_text_secondary"/>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- BOTTOM NAVIGATION                                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/bg_primary"
+        app:itemIconTint="@color/bottom_nav_tint"
+        app:itemTextColor="@color/bottom_nav_tint"
+        app:labelVisibilityMode="labeled"
+        app:elevation="0dp"
+        app:menu="@menu/menu_bottom_nav" />
 
-        <!-- VIEWPAGER (IMPORTANT) -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/viewPager"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_margin="16dp"/>
-
-        <!-- layoutTest (IMPORTANT for v2rayNG logic) -->
-        <LinearLayout
-            android:id="@+id/layoutTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/connection_test_pending"
-                android:textColor="@color/color_text_secondary"/>
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <!-- NAVIGATION DRAWER -->
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@color/md_theme_surface"
-        app:menu="@menu/menu_drawer"
-        app:headerLayout="@layout/nav_header"
-        app:itemTextColor="@color/color_text_primary"
-        app:itemIconTint="@color/color_text_secondary"/>
-
-</androidx.drawerlayout.widget.DrawerLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
