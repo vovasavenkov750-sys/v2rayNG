@@ -4,8 +4,6 @@
   Полностью заменяет оригинальный colors.xml
 -->
 <resources>
-    <color name="color_card_bg">#1A1A1A</color>
-    <color name="color_card_border">#222222</color>
 
     <!-- ── Основные цвета темы ── -->
     <color name="accent">#E040A0</color>
