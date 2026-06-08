@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ФАЙЛ: V2rayNG/app/src/main/res/values/themes.xml
-  Оригинальная структура сохранена полностью.
-  Добавлены только: тёмные цвета фона + поддержка bottom nav tint.
--->
 <resources>
 
-    <!-- Базовая тема — сюда наследуются все остальные -->
     <style name="AppThemeBase" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
@@ -25,19 +19,19 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!-- Основная тема приложения -->
     <style name="AppTheme" parent="AppThemeBase" />
-
-    <!-- Алиас который используется в AndroidManifest.xml -->
     <style name="AppThemeDayNight.NoActionBar" parent="AppThemeBase" />
 
-    <!-- Translucent для ScSwitchActivity -->
     <style name="AppTheme.NoActionBar.Translucent" parent="AppThemeBase">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <!-- Алиас для Translucent (на случай если манифест ссылается на оба варианта) -->
     <style name="AppThemeDayNight.NoActionBar.Translucent" parent="AppTheme.NoActionBar.Translucent" />
+
+    <style name="BrandedSwitch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="thumbTint">@color/colorPrimary</item>
+        <item name="trackTint">@color/colorPrimary</item>
+    </style>
 
 </resources>
