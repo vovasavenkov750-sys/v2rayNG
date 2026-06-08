@@ -49,4 +49,12 @@
     <color name="md_theme_shadow">#000000</color>
     <color name="md_theme_surfaceTint">#C0C0C0</color>
     <color name="md_theme_scrim">#000000</color>
+    <color name="color_card_bg">#1A1A1A</color>
+    <color name="color_card_border">#222222</color>
+    <color name="color_card_active_bg">#1E1520</color>
+    <color name="color_card_active_border">#E040A0</color>
+    <color name="color_text_primary">#E0E0E0</color>
+    <color name="color_text_secondary">#777777</color>
+    <color name="color_fab_active">#E040A0</color>
+    <color name="color_fab_inactive">#444444</color>
 </resources>
