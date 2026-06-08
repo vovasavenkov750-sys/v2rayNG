@@ -79,7 +79,6 @@
                     android:focusable="true"
                     android:contentDescription="@string/tasker_start_service"
                     android:src="@drawable/ic_play_24dp"
-                    app:customSize="120dp"
                     app:maxImageSize="48dp"
                     app:tint="@color/colorWhite"
                     app:backgroundTint="@color/color_fab_inactive" />
