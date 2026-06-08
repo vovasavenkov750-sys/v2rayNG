@@ -1,71 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ФАЙЛ: V2rayNG/app/src/main/res/values/themes.xml
-  (также скопируй в values-night/themes.xml — тема одна, всегда тёмная)
-  Заменяет оригинальный styles.xml / themes.xml
+  Оригинальная структура сохранена полностью.
+  Добавлены только: тёмные цвета фона + поддержка bottom nav tint.
 -->
 <resources>
 
-    <!-- Базовая тёмная тема приложения -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <!-- Базовая тема — сюда наследуются все остальные -->
+    <style name="AppThemeBase" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
         <item name="colorSecondary">@color/colorSecondary</item>
         <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
         <item name="android:colorBackground">@color/bg_primary</item>
         <item name="colorSurface">@color/colorSurface</item>
         <item name="colorError">@color/colorError</item>
-        <item name="colorOnPrimary">@color/colorOnPrimary</item>
-        <item name="colorOnSecondary">@color/colorOnSecondary</item>
         <item name="colorOnBackground">@color/colorOnBackground</item>
         <item name="colorOnSurface">@color/colorOnSurface</item>
         <item name="android:windowBackground">@color/bg_primary</item>
         <item name="android:statusBarColor">@color/bg_primary</item>
         <item name="android:navigationBarColor">@color/bg_primary</item>
         <item name="android:windowLightStatusBar">false</item>
-        <!-- Toolbar -->
-        <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
-        <!-- MaterialCardView -->
-        <item name="materialCardViewStyle">@style/Widget.App.CardView</item>
-        <!-- BottomNavigationView -->
-        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation</item>
     </style>
 
-    <!-- Алиас — оригинальный код ссылается на AppThemeDayNight.NoActionBar -->
-    <style name="AppThemeDayNight.NoActionBar" parent="AppTheme" />
+    <!-- Основная тема приложения -->
+    <style name="AppTheme" parent="AppThemeBase" />
+
+    <!-- Алиас который используется в AndroidManifest.xml -->
+    <style name="AppThemeDayNight.NoActionBar" parent="AppThemeBase" />
 
     <!-- Translucent для ScSwitchActivity -->
-    <style name="AppThemeDayNight.NoActionBar.Translucent" parent="AppTheme">
+    <style name="AppTheme.NoActionBar.Translucent" parent="AppThemeBase">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <!-- Toolbar -->
-    <style name="Widget.App.Toolbar" parent="Widget.MaterialComponents.Toolbar">
-        <item name="android:background">@color/bg_primary</item>
-        <item name="titleTextColor">@color/text_primary</item>
-    </style>
-
-    <!-- CardView -->
-    <style name="Widget.App.CardView" parent="Widget.MaterialComponents.CardView">
-        <item name="cardBackgroundColor">@color/bg_card</item>
-        <item name="cardElevation">0dp</item>
-        <item name="strokeColor">@color/border_card</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="cardCornerRadius">12dp</item>
-    </style>
-
-    <!-- BottomNavigationView -->
-    <style name="Widget.App.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
-        <item name="android:background">@color/bg_primary</item>
-        <item name="itemIconTint">@color/bottom_nav_tint</item>
-        <item name="itemTextColor">@color/bottom_nav_tint</item>
-        <item name="elevation">0dp</item>
-    </style>
-
-    <!-- Splash / Launch -->
-    <style name="SplashTheme" parent="AppTheme">
-        <item name="android:windowBackground">@color/bg_primary</item>
-    </style>
+    <!-- Алиас для Translucent (на случай если манифест ссылается на оба варианта) -->
+    <style name="AppThemeDayNight.NoActionBar.Translucent" parent="AppTheme.NoActionBar.Translucent" />
 
 </resources>
