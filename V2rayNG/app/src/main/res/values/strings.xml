@@ -483,7 +483,6 @@
  -->
 
     <!--  ── Изменить существующее ──  -->
-    <string name="app_name" translatable="false">Sav3nokRay</string>
     <string name="app_tile_name">Sav3nokRay</string>
     <string name="app_widget_name">Sav3nokRay</string>
     <!--  ── Новые строки для нового UI ──  -->
